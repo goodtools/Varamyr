@@ -23,35 +23,6 @@ import java.util.zip.ZipOutputStream;
  * Time: PM10:19
  */
 public class Varamyr {
-    public static final byte[] font = ("\n<style type='text/css'>\n" +
-            "@page {\n" +
-            "    margin-bottom: 5pt;\n" +
-            "    margin-top: 5pt\n" +
-            "    }\n" +
-            "@font-face {\n" +
-            "    font-family: \"DroidFont\", serif, sans-serif;\n" +
-            "    font-weight: normal;\n" +
-            "    font-style: normal;\n" +
-            "    src: url(res:///system/fonts/DroidSansFallback.ttf)\n" +
-            "    }\n" +
-            "@font-face {\n" +
-            "    font-family: \"DroidFont\", serif, sans-serif;\n" +
-            "    font-weight: bold;\n" +
-            "    font-style: normal;\n" +
-            "    src: url(res:///system/fonts/DroidSansFallback.ttf)\n" +
-            "    }\n" +
-            "@font-face {\n" +
-            "    font-family: \"DroidFont\", serif, sans-serif;\n" +
-            "    font-weight: normal;\n" +
-            "    font-style: italic;\n" +
-            "    src: url(res:///system/fonts/DroidSansFallback.ttf)\n" +
-            "    }\n" +
-            "@font-face {\n" +
-            "    font-family: \"DroidFont\", serif, sans-serif;\n" +
-            "    font-weight: bold;\n" +
-            "    font-style: italic;\n" +
-            "    src: url(res:///system/fonts/DroidSansFallback.ttf)\n" +
-            "    }\n</style>").getBytes();
 
     public static void main(String args[]) {
         if (args.length == 0) {
@@ -60,7 +31,7 @@ public class Varamyr {
         }
 
         try {
-            new Varamyr().parse(args[0]);
+             parse(args[0]);
         } catch (IOException e) {
             System.out.println("Malformed epub file!!");
         } catch (ParserConfigurationException e) {
@@ -70,7 +41,7 @@ public class Varamyr {
         }
     }
 
-    public void parse(String filePath) throws IOException, ParserConfigurationException, SAXException {
+    public static void parse(String filePath) throws IOException, ParserConfigurationException, SAXException {
         if (!filePath.endsWith(".epub")) {
             System.out.println("Please provide an epub file");
             return;
@@ -107,6 +78,8 @@ public class Varamyr {
 
         entries = book.entries();
 
+        byte[] css = getCss();
+
         while (entries.hasMoreElements()) {
             ZipEntry zipEntry = (ZipEntry) entries.nextElement();
             String path = zipEntry.getName().substring(zipEntry.getName().lastIndexOf('/') + 1);
@@ -120,7 +93,8 @@ public class Varamyr {
                     if (line.contains("<head>")) {
                         int position = line.indexOf("<head>") + "<head>".length();
                         out.write(line.substring(0, position).getBytes());
-                        out.write(font);
+
+                        out.write(css);
                         out.write(line.substring(position).getBytes());
                     } else {
                         out.write(line.getBytes());
@@ -144,5 +118,34 @@ public class Varamyr {
         }
 
         out.close();
+    }
+
+    public static byte[] getCss() {
+
+        InputStream in  = Varamyr.class.getClassLoader().getResourceAsStream("zw.css");
+
+        try {
+
+            String str = inputStream2String(in);
+
+            return ("\n<style type='text/css'>\n" + str + "\n</style>\n").getBytes();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return new byte[0];
+
+    }
+
+
+    private static String inputStream2String(InputStream is) throws IOException {
+        BufferedReader in = new BufferedReader(new InputStreamReader(is));
+        StringBuffer buffer = new StringBuffer();
+        String line = "";
+        while ((line = in.readLine()) != null){
+            buffer.append(line).append("\n");
+        }
+        return buffer.toString();
     }
 }
